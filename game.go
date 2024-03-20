@@ -33,19 +33,21 @@ func runGame() {
 	printBoard()
 	fmt.Print("> ")
 	for scanner.Scan() {
-		legalMoves := generateMoves()
 		input := scanner.Text()
-		if strings.HasPrefix(input, "show") {
-			field := parseCoordinate(strings.Split(input, " ")[1])
-			printLegalMovesFromField(field, legalMoves)
-		} else if input == "q" {
+		if input == "q" {
 			break
 		} else {
-			move := parseMove(input)
-			makeMove(move, legalMoves)
-			printBoard()
+			legalMoves := generateMoves()
+			if strings.HasPrefix(input, "show") {
+				field := parseCoordinate(strings.Split(input, " ")[1])
+				printLegalMovesFromField(field, legalMoves)
+			} else {
+				move := parseMove(input)
+				makeMove(move, legalMoves)
+				printBoard()
+			}
+			fmt.Print("> ")
 		}
-		fmt.Print("> ")
 	}
 }
 

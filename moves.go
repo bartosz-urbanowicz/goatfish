@@ -7,7 +7,7 @@ import (
 var (
 	blackPawnStartingSquares = []int{31, 32, 33, 34, 35, 36, 37, 38}
 	whitePawnStartingSquares = []int{81, 82, 83, 84, 85, 86, 87, 88}
-	offsets = map[byte]int{
+	offsets                  = map[byte]int{
 		0: -10,
 		1: 1,
 		2: 10,
@@ -38,12 +38,12 @@ func generateMoves() []Move {
 			if isBlack(piece) == position.sideToMove {
 				if isRayPiece(piece) {
 					moves = append(moves, generateRayMoves(field, piece)...)
-				}
-				if isType(piece, "pawn") {
+				} else if isType(piece, "pawn") {
 					moves = append(moves, generatePawnMoves(field, piece)...)
-				}
-				if isType(piece, "king") {
+				} else if isType(piece, "king") {
 					moves = append(moves, generateKingMoves(field)...)
+				} else if isType(piece, "knight") {
+					moves = append(moves, generateKnightMoves(field)...)
 				}
 			}
 		}
@@ -126,9 +126,21 @@ func generatePawnMoves(field int, piece byte) []Move {
 func generateKingMoves(field int) []Move {
 	moves := []Move{}
 	for i := 0; i < 8; i++ {
-		piece := position.board[field + offsets[byte(i)]]
+		piece := position.board[field+offsets[byte(i)]]
 		if piece == 0 || isBlack(piece) != position.sideToMove {
 			moves = append(moves, *NewMove(field, field+offsets[byte(i)]))
+		}
+	}
+	return moves
+}
+
+func generateKnightMoves(field int) []Move {
+	moves := []Move{}
+	knightOffsets := []int{-21, -19, -8, 12, 21, 19, 8, -12}
+	for _, offset := range knightOffsets {
+		piece := position.board[field+offset]
+		if piece == 0 || isBlack(piece) != position.sideToMove {
+			moves = append(moves, *NewMove(field, field+offset))
 		}
 	}
 	return moves
