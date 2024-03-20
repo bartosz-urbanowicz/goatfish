@@ -31,29 +31,20 @@ func NewMove(startField int, targetField int) *Move {
 	return m
 }
 
-func generatePieceMoves(field int, piece byte) []Move {
-	if piece != 0 {
-		if isBlack(piece) == position.sideToMove {
-			if isRayPiece(piece) {
-				return generateRayMoves(field, piece)
-			}
-			if isType(piece, "pawn") {
-				return generatePawnMoves(field, piece)
-			}
-			if isType(piece, "king") {
-				return generateKingMoves(field)
-			}
-		}
-	}
-	return []Move{}
-}
-
 func generateMoves() []Move {
 	var moves []Move
 	for field, piece := range position.board {
 		if piece != 0 {
 			if isBlack(piece) == position.sideToMove {
-				moves = append(moves, generatePieceMoves(field, piece)...)
+				if isRayPiece(piece) {
+					moves = append(moves, generateRayMoves(field, piece)...)
+				}
+				if isType(piece, "pawn") {
+					moves = append(moves, generatePawnMoves(field, piece)...)
+				}
+				if isType(piece, "king") {
+					moves = append(moves, generateKingMoves(field)...)
+				}
 			}
 		}
 	}
