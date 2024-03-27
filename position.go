@@ -10,7 +10,7 @@ type Position struct {
 	board             [120]byte
 	sideToMove      bool
 	castlingRights   [4]bool
-	enPassantTarget int8
+	enPassantTarget int
 	halfmoveClock    byte
 	fullmoveCounter  uint16
 }
@@ -91,7 +91,7 @@ func newPosition(fen string) *Position {
 	}
 
 	//en passant target field
-	var enPassantTarget int8
+	var enPassantTarget int
 	if fields[3] == "-" {
 		enPassantTarget = -1
 	} else {
@@ -99,7 +99,8 @@ func newPosition(fen string) *Position {
 		if err != nil {
 			panic(err)
 		}
-		enPassantTarget = ((8 - int8(rank)) * 8) + (int8(fields[3][0]) - 97)
+		//96 becauese we subtract 95 to get a number from ascii value and subtract 1 because of sentinel fields
+		enPassantTarget = ((10 - int(rank)) * 10) + (int(fields[3][0]) - 96)
 	}
 
 	//halfmove clock

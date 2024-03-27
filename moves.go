@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -19,19 +20,28 @@ var (
 	}
 )
 
+const (
+	normal    byte = 0
+	enPassant byte = 1
+	firstPawnMove byte = 2
+)
+
 type Move struct {
 	startField  int
 	targetField int
+	moveType    byte
 }
 
-func NewMove(startField int, targetField int) *Move {
+func NewMove(startField int, targetField int, moveType byte) *Move {
 	m := new(Move)
 	m.startField = startField
 	m.targetField = targetField
+	m.moveType = moveType
 	return m
 }
 
 func generateMoves() []Move {
+	fmt.Println("generating moves")
 	var moves []Move
 	for field, piece := range position.board {
 		if piece != 0 {
@@ -80,7 +90,7 @@ func generateRayMoves(field int, piece byte) []Move {
 	for _, dir := range directions {
 		possibleOffsets := possibleOffsetsInDirection(offsets[dir], field, dir, []int{})
 		for _, offset := range possibleOffsets {
-			moves = append(moves, *NewMove(field, field+offset))
+			moves = append(moves, *NewMove(field, field+offset, normal))
 		}
 	}
 	return moves
@@ -105,10 +115,15 @@ func generatePawnMoves(field int, piece byte) []Move {
 			possiblePushOffsets = []int{offsets[0]}
 		}
 	}
-	for _, offset := range possiblePushOffsets {
+	for i, offset := range possiblePushOffsets {
 		piece := position.board[field+offset]
 		if piece == 0 {
-			moves = append(moves, *NewMove(field, field+offset))
+			//if this is the second then the move generates an en passant target square
+			if i == 1 {
+				moves = append(moves, *NewMove(field, field+offset, firstPawnMove))
+			} else {
+				moves = append(moves, *NewMove(field, field+offset, normal))
+			}
 		} else {
 			//if the first field we check is blocked with a piece we cant move to the second field
 			break
@@ -116,8 +131,12 @@ func generatePawnMoves(field int, piece byte) []Move {
 	}
 	for _, offset := range possibleTakeOffsets {
 		piece := position.board[field+offset]
-		if isPiece(piece) && isBlack(piece) != position.sideToMove {
-			moves = append(moves, *NewMove(field, field+offset))
+		if (isPiece(piece) && isBlack(piece) != position.sideToMove) {
+			fmt.Println("adding normal take move", field + offset)
+			moves = append(moves, *NewMove(field, field+offset, normal))
+		} else if field + offset == position.enPassantTarget {
+			fmt.Println("adding en passant move", field + offset)
+			moves = append(moves, *NewMove(field, field+offset, enPassant))
 		}
 	}
 	return moves
@@ -128,7 +147,7 @@ func generateKingMoves(field int) []Move {
 	for i := 0; i < 8; i++ {
 		piece := position.board[field+offsets[byte(i)]]
 		if piece == 0 || isBlack(piece) != position.sideToMove {
-			moves = append(moves, *NewMove(field, field+offsets[byte(i)]))
+			moves = append(moves, *NewMove(field, field+offsets[byte(i)], normal))
 		}
 	}
 	return moves
@@ -140,8 +159,43 @@ func generateKnightMoves(field int) []Move {
 	for _, offset := range knightOffsets {
 		piece := position.board[field+offset]
 		if piece == 0 || isBlack(piece) != position.sideToMove {
-			moves = append(moves, *NewMove(field, field+offset))
+			moves = append(moves, *NewMove(field, field+offset, normal))
 		}
 	}
 	return moves
+}
+
+func makeMove(move *Move, legalMoves []Move) {
+	var isLegal bool = false
+	for _, legalMove := range legalMoves {
+		if move.startField == legalMove.startField && move.targetField == legalMove.targetField {
+			isLegal = true
+		}
+	}
+	if isLegal {
+		piece := position.board[move.startField]
+		position.board[move.startField] = 0
+		position.board[move.targetField] = piece
+		position.enPassantTarget = -1
+		if move.moveType == firstPawnMove {
+			if position.sideToMove {
+				position.enPassantTarget = move.targetField - 10
+			} else {
+				position.enPassantTarget = move.targetField + 10
+			}
+			
+		}
+		if move.moveType == enPassant {
+			fmt.Println("google en passant")
+			if position.sideToMove {
+				position.board[move.targetField - 10] = 0
+			} else {
+				position.board[move.targetField + 10] = 0
+			}
+		}
+		position.sideToMove = !position.sideToMove
+		position.fullmoveCounter++
+	} else {
+		fmt.Println("this move is illegal")
+	}
 }

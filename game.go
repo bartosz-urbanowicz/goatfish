@@ -7,6 +7,7 @@ import (
 	"strings"
 	"slices"
 	"strconv"
+	"math"
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
 	printBoard()
+	fmt.Println("en passant target: ", position.enPassantTarget)
 	fmt.Print("> ")
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -38,6 +40,7 @@ func runGame() {
 			break
 		} else {
 			legalMoves := generateMoves()
+			fmt.Println("legal moves: ", legalMoves)
 			if strings.HasPrefix(input, "show") {
 				field := parseCoordinate(strings.Split(input, " ")[1])
 				printLegalMovesFromField(field, legalMoves)
@@ -91,7 +94,6 @@ func printBoard() {
 }
 
 func printLegalMovesFromField(field int, legalMoves []Move) {
-	fmt.Println("printing moves form field", field)
 	fieldsToMove := []int{}
 	for _, move := range legalMoves {
 		if move.startField == field {
@@ -105,7 +107,7 @@ func printLegalMovesFromField(field int, legalMoves []Move) {
 		for j := 1; j < 9; j++ {
 			currField := (i * 10) + j
 			if slices.Contains(fieldsToMove, currField) {
-				if position.board[currField] == 0 {
+				if position.board[currField] == 0 && currField != position.enPassantTarget {
 					fmt.Print("#", " ")
 				} else {
 					fmt.Print("X ")
@@ -125,28 +127,18 @@ func printLegalMovesFromField(field int, legalMoves []Move) {
 	fmt.Print("\n")
 }
 
-func makeMove(move *Move, legalMoves []Move) {
-	var isLegal bool = false
-	for _, legalMove := range legalMoves {
-		if move.startField == legalMove.startField && move.targetField == legalMove.targetField {
-			isLegal = true
-		}
-	}
-	if isLegal {
-		piece := position.board[move.startField]
-		position.board[move.startField] = 0
-		position.board[move.targetField] = piece
-		position.sideToMove = !position.sideToMove
-		position.fullmoveCounter++
-	} else {
-		fmt.Println("this move is illegal")
-	}
-}
-
 func parseMove(move string) *Move {
 	move = strings.TrimSuffix(move, "\n")
 	move = strings.TrimSuffix(move, "\r")
 	startField := parseCoordinate(move[:2])
 	targetField := parseCoordinate(move[2:])
-	return NewMove(startField, targetField)
+	if isType(position.board[startField], "pawn") {
+		if math.Abs(float64(targetField - startField)) == 20 {
+			return NewMove(startField, targetField, firstPawnMove)
+		} else if targetField == position.enPassantTarget {
+			return NewMove(startField, targetField, enPassant)
+		}
+	}
+	return NewMove(startField, targetField, normal)
+
 }
