@@ -24,6 +24,8 @@ const (
 	normal    byte = 0
 	enPassant byte = 1
 	firstPawnMove byte = 2
+	castleShort byte = 3
+	castleLong byte = 4
 )
 
 type Move struct {
@@ -58,7 +60,16 @@ func generateMoves() []Move {
 			}
 		}
 	}
+	moves = append(moves, generateCastleMoves()...)
 	return moves
+}
+
+func generateCastleMoves() []Move {
+	if position.sideToMove {
+		castleShortFields = 
+	} else {
+
+	}
 }
 
 func possibleOffsetsInDirection(currOffset int, startField int, direction byte, possibleOffsets []int) []int {
