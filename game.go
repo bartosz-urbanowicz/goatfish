@@ -32,7 +32,6 @@ var (
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
 	printBoard()
-	fmt.Println("en passant target: ", position.enPassantTarget)
 	fmt.Print("> ")
 	for scanner.Scan() {
 		input := scanner.Text()
@@ -41,6 +40,7 @@ func runGame() {
 		} else {
 			legalMoves := generateMoves()
 			fmt.Println("legal moves: ", legalMoves)
+			fmt.Println("castle rights: ", position.castlingRights)
 			if strings.HasPrefix(input, "show") {
 				field := parseCoordinate(strings.Split(input, " ")[1])
 				printLegalMovesFromField(field, legalMoves)
@@ -137,6 +137,14 @@ func parseMove(move string) *Move {
 			return NewMove(startField, targetField, firstPawnMove)
 		} else if targetField == position.enPassantTarget {
 			return NewMove(startField, targetField, enPassant)
+		}
+	} else {
+		castleShortMoves := []string{"e8g8", "e1g1"}
+		castleLongMoves := []string{"e8c8", "e1c1"}
+		if slices.Contains(castleShortMoves, move) {
+			return NewMove(startField, targetField, castleShort)
+		} else if slices.Contains(castleLongMoves, move) {
+			return NewMove(startField, targetField, castleLong)
 		}
 	}
 	return NewMove(startField, targetField, normal)

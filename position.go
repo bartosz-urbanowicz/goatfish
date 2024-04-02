@@ -8,7 +8,7 @@ import (
 
 type Position struct {
 	board             [120]byte
-	sideToMove      bool
+	blackToMove      bool
 	castlingRights   [4]bool
 	enPassantTarget int
 	halfmoveClock    byte
@@ -71,9 +71,9 @@ func newPosition(fen string) *Position {
 	}
 
 	//side to move
-	side_to_move := fields[1] != "w"
+	blackToMove := fields[1] != "w"
 
-	//castling rights
+	//castling rights (indexes: white short - 0, white long - 1, black short - 2, black long - 3)
 	castlingRights := [4]bool{false, false, false, false}
 	if fields[2] != "-" {
 		if strings.Contains(fields[2], "K") {
@@ -116,7 +116,7 @@ func newPosition(fen string) *Position {
 	}
 
 	p := Position{board: board,
-		sideToMove:      side_to_move,
+		blackToMove:      blackToMove,
 		castlingRights:   castlingRights,
 		enPassantTarget: enPassantTarget,
 		halfmoveClock:    byte(halfmoveClock),
