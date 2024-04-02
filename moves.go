@@ -199,8 +199,19 @@ func generateKnightMoves(field int) []Move {
 	return moves
 }
 
-func handleCastlingRights(piece byte, startField int) {
-	if isType(piece, "king") {
+func handleCastlingRights(piece byte, startField int, targetField int) {
+	if isType(position.board[targetField], "rook") {
+		switch targetField {
+		case 21:
+			position.castlingRights[3] = false
+		case 28:
+			position.castlingRights[2] = false
+		case 91:
+			position.castlingRights[1] = false
+		case 98:
+			position.castlingRights[0] = false
+		}
+	} else if isType(piece, "king") {
 		if position.blackToMove {
 			position.castlingRights[2] = false
 			position.castlingRights[3] = false
@@ -208,7 +219,7 @@ func handleCastlingRights(piece byte, startField int) {
 			position.castlingRights[0] = false
 			position.castlingRights[1] = false
 		}
-	} else {
+	} else if isType(piece, "rook") {
 		switch startField {
 		case 21:
 			position.castlingRights[3] = false
@@ -231,7 +242,7 @@ func makeMove(move *Move, legalMoves []Move) {
 	}
 	if isLegal {
 		piece := position.board[move.startField]
-		handleCastlingRights(piece, move.startField)
+		handleCastlingRights(piece, move.startField, move.targetField)
 		position.board[move.startField] = 0
 		position.board[move.targetField] = piece
 		switch move.moveType {
