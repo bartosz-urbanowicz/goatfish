@@ -21,11 +21,15 @@ var (
 )
 
 const (
-	normal        byte = 0
-	enPassant     byte = 1
-	firstPawnMove byte = 2
-	castleShort   byte = 3
-	castleLong    byte = 4
+	normal          byte = 0
+	enPassant       byte = 1
+	firstPawnMove   byte = 2
+	castleShort     byte = 3
+	castleLong      byte = 4
+	promotionQueen  byte = 5
+	promotionRook   byte = 6
+	promotionKnight byte = 7
+	promotionBishop byte = 8
 )
 
 type Move struct {
@@ -93,7 +97,6 @@ func generateCastleMoves() []Move {
 			moves = append(moves, *NewMove(95, 93, castleLong))
 		}
 	}
-	fmt.Println("generated castle moves: ", moves)
 	return moves
 }
 
@@ -132,6 +135,15 @@ func generateRayMoves(field int, piece byte) []Move {
 	return moves
 }
 
+func generatePromotionMoves(field int, offset int) []Move {
+	moves := []Move{}
+	promotionTypes := [4]byte{promotionQueen, promotionRook, promotionKnight, promotionBishop}
+	for _, promotionType := range promotionTypes {
+		moves = append(moves, *NewMove(field, field+offset, promotionType))
+	}
+	return moves
+}
+
 func generatePawnMoves(field int, piece byte) []Move {
 	moves := []Move{}
 	var possiblePushOffsets []int
@@ -154,11 +166,16 @@ func generatePawnMoves(field int, piece byte) []Move {
 	for i, offset := range possiblePushOffsets {
 		piece := position.board[field+offset]
 		if piece == 0 {
-			//if this is the second then the move generates an en passant target square
+			//if this is the second iteration then the move generates an en passant target square
 			if i == 1 {
 				moves = append(moves, *NewMove(field, field+offset, firstPawnMove))
 			} else {
-				moves = append(moves, *NewMove(field, field+offset, normal))
+				if field / 10 == 3 || field / 10 == 8 {
+					//promotion moves
+					moves = append(moves, generatePromotionMoves(field, offset)...)
+				} else {
+					moves = append(moves, *NewMove(field, field+offset, normal))
+				}
 			}
 		} else {
 			//if the first field we check is blocked with a piece we cant move to the second field
@@ -168,7 +185,12 @@ func generatePawnMoves(field int, piece byte) []Move {
 	for _, offset := range possibleTakeOffsets {
 		piece := position.board[field+offset]
 		if isPiece(piece) && isBlack(piece) != position.blackToMove {
-			moves = append(moves, *NewMove(field, field+offset, normal))
+			if field / 10 == 3 || field / 10 == 8 {
+				//promotion moves
+				moves = append(moves, generatePromotionMoves(field, offset)...)
+			} else {
+				moves = append(moves, *NewMove(field, field+offset, normal))
+			}
 		} else if field+offset == position.enPassantTarget {
 			moves = append(moves, *NewMove(field, field+offset, enPassant))
 		}
@@ -275,6 +297,30 @@ func makeMove(move *Move, legalMoves []Move) {
 				position.board[91] = 0
 				position.board[94] = 12
 			}
+		case promotionQueen:
+			if position.blackToMove {
+				position.board[move.targetField] = 13
+			} else {
+				position.board[move.targetField] = 5
+			} 
+		case promotionRook:
+			if position.blackToMove {
+				position.board[move.targetField] = 12
+			} else {
+				position.board[move.targetField] = 4
+			} 
+		case promotionKnight:
+			if position.blackToMove {
+				position.board[move.targetField] = 10
+			} else {
+				position.board[move.targetField] = 2
+			} 
+		case promotionBishop:
+			if position.blackToMove {
+				position.board[move.targetField] = 11
+			} else {
+				position.board[move.targetField] = 3
+			} 
 		}
 		position.enPassantTarget = -1
 		position.blackToMove = !position.blackToMove

@@ -40,7 +40,6 @@ func runGame() {
 		} else {
 			legalMoves := generateMoves()
 			fmt.Println("legal moves: ", legalMoves)
-			fmt.Println("castle rights: ", position.castlingRights)
 			if strings.HasPrefix(input, "show") {
 				field := parseCoordinate(strings.Split(input, " ")[1])
 				printLegalMovesFromField(field, legalMoves)
@@ -137,6 +136,9 @@ func parseMove(move string) *Move {
 			return NewMove(startField, targetField, firstPawnMove)
 		} else if targetField == position.enPassantTarget {
 			return NewMove(startField, targetField, enPassant)
+		} else if startField / 10 == 3 || startField / 10 == 8 {
+			// TODO minor promotions
+			return NewMove(startField, targetField, promotionQueen)
 		}
 	} else {
 		castleShortMoves := []string{"e8g8", "e1g1"}
