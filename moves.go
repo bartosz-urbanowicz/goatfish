@@ -170,7 +170,7 @@ func generatePawnMoves(field int, piece byte) []Move {
 			if i == 1 {
 				moves = append(moves, *NewMove(field, field+offset, firstPawnMove))
 			} else {
-				if field / 10 == 3 || field / 10 == 8 {
+				if (field + offset) / 10 == 2 || (field + offset) / 10 == 9 {
 					//promotion moves
 					moves = append(moves, generatePromotionMoves(field, offset)...)
 				} else {
@@ -185,7 +185,7 @@ func generatePawnMoves(field int, piece byte) []Move {
 	for _, offset := range possibleTakeOffsets {
 		piece := position.board[field+offset]
 		if isPiece(piece) && isBlack(piece) != position.blackToMove {
-			if field / 10 == 3 || field / 10 == 8 {
+			if (field + offset) / 10 == 2 || (field + offset) / 10 == 9 {
 				//promotion moves
 				moves = append(moves, generatePromotionMoves(field, offset)...)
 			} else {
@@ -255,14 +255,14 @@ func handleCastlingRights(piece byte, startField int, targetField int) {
 	}
 }
 
-func makeMove(move *Move, legalMoves []Move) {
-	var isLegal bool = false
-	for _, legalMove := range legalMoves {
-		if move.startField == legalMove.startField && move.targetField == legalMove.targetField {
-			isLegal = true
+func makeMove(move *Move, validMoves []Move) {
+	var isValid bool = false
+	for _, validMove := range validMoves {
+		if move.startField == validMove.startField && move.targetField == validMove.targetField {
+			isValid = true
 		}
 	}
-	if isLegal {
+	if isValid {
 		piece := position.board[move.startField]
 		handleCastlingRights(piece, move.startField, move.targetField)
 		position.board[move.startField] = 0
@@ -287,7 +287,7 @@ func makeMove(move *Move, legalMoves []Move) {
 				position.board[26] = 12
 			} else {
 				position.board[98] = 0
-				position.board[96] = 12
+				position.board[96] = 4
 			}
 		case castleLong:
 			if position.blackToMove {
@@ -326,6 +326,6 @@ func makeMove(move *Move, legalMoves []Move) {
 		position.blackToMove = !position.blackToMove
 		position.fullmoveCounter++
 	} else {
-		fmt.Println("this move is illegal")
+		fmt.Println("this move is invalid")
 	}
 }

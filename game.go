@@ -3,11 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
-	"strings"
+	"regexp"
 	"slices"
 	"strconv"
-	"math"
+	"strings"
 )
 
 var (
@@ -28,14 +29,16 @@ var (
 	}
 )
 
-
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
+	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8])$")
 	printBoard()
 	fmt.Print("> ")
 	for scanner.Scan() {
 		input := scanner.Text()
-		if input == "q" {
+		if !regex.MatchString(input) {
+			fmt.Print("invalid input\n>")
+		} else if input == "q" {
 			break
 		} else {
 			legalMoves := generateMoves()
@@ -132,11 +135,11 @@ func parseMove(move string) *Move {
 	startField := parseCoordinate(move[:2])
 	targetField := parseCoordinate(move[2:])
 	if isType(position.board[startField], "pawn") {
-		if math.Abs(float64(targetField - startField)) == 20 {
+		if math.Abs(float64(targetField-startField)) == 20 {
 			return NewMove(startField, targetField, firstPawnMove)
 		} else if targetField == position.enPassantTarget {
 			return NewMove(startField, targetField, enPassant)
-		} else if startField / 10 == 3 || startField / 10 == 8 {
+		} else if targetField/10 == 2 || targetField/10 == 9 {
 			// TODO minor promotions
 			return NewMove(startField, targetField, promotionQueen)
 		}
