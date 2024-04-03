@@ -31,7 +31,7 @@ var (
 
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
-	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8])$")
+	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake)$")
 	printBoard()
 	fmt.Print("> ")
 	for scanner.Scan() {
@@ -40,9 +40,11 @@ func runGame() {
 			fmt.Print("invalid input\n>")
 		} else if input == "q" {
 			break
+		} else if input == "unmake" {
+			unmakeMove()
+			printBoard()
 		} else {
 			legalMoves := generateMoves()
-			fmt.Println("legal moves: ", legalMoves)
 			if strings.HasPrefix(input, "show") {
 				field := parseCoordinate(strings.Split(input, " ")[1])
 				printLegalMovesFromField(field, legalMoves)
@@ -51,8 +53,8 @@ func runGame() {
 				makeMove(move, legalMoves)
 				printBoard()
 			}
-			fmt.Print("> ")
 		}
+		fmt.Print("> ")
 	}
 }
 
@@ -77,6 +79,11 @@ func parseCoordinate(coord string) int {
 }
 
 func printBoard() {
+	fmt.Println("(black to move: ", position.blackToMove, ")")
+	fmt.Println("(castling rights: ", position.castlingRights, ")")
+	fmt.Println("(en passant target: ", position.enPassantTarget, ")")
+	fmt.Println("(halfmove clock: ", position.halfmoveClock, ")")
+	fmt.Println("(fullmove counter: ", position.fullmoveCounter, ")")
 	for i := 2; i < 10; i++ {
 		//printing rank number
 		fmt.Print(8 - (i - 2))

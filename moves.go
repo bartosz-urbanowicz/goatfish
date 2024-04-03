@@ -170,7 +170,7 @@ func generatePawnMoves(field int, piece byte) []Move {
 			if i == 1 {
 				moves = append(moves, *NewMove(field, field+offset, firstPawnMove))
 			} else {
-				if (field + offset) / 10 == 2 || (field + offset) / 10 == 9 {
+				if (field+offset)/10 == 2 || (field+offset)/10 == 9 {
 					//promotion moves
 					moves = append(moves, generatePromotionMoves(field, offset)...)
 				} else {
@@ -185,7 +185,7 @@ func generatePawnMoves(field int, piece byte) []Move {
 	for _, offset := range possibleTakeOffsets {
 		piece := position.board[field+offset]
 		if isPiece(piece) && isBlack(piece) != position.blackToMove {
-			if (field + offset) / 10 == 2 || (field + offset) / 10 == 9 {
+			if (field+offset)/10 == 2 || (field+offset)/10 == 9 {
 				//promotion moves
 				moves = append(moves, generatePromotionMoves(field, offset)...)
 			} else {
@@ -263,10 +263,24 @@ func makeMove(move *Move, validMoves []Move) {
 		}
 	}
 	if isValid {
+		unmakeInfo := UnmakeInfo{
+			move: move,
+			targetFieldContent: position.board[move.targetField],
+			castlingRights: position.castlingRights,
+			enPassantTarget: position.enPassantTarget,
+			halfmoveClock: position.halfmoveClock,
+		}
+		position.unmakeHistory = append(position.unmakeHistory, unmakeInfo)
 		piece := position.board[move.startField]
+		if isType(piece, "pawn") || position.board[move.targetField] != 0 {
+			position.halfmoveClock = 0
+		} else {
+			position.halfmoveClock++
+		}
 		handleCastlingRights(piece, move.startField, move.targetField)
 		position.board[move.startField] = 0
 		position.board[move.targetField] = piece
+		position.enPassantTarget = -1
 		switch move.moveType {
 		case firstPawnMove:
 			if position.blackToMove {
@@ -302,30 +316,47 @@ func makeMove(move *Move, validMoves []Move) {
 				position.board[move.targetField] = 13
 			} else {
 				position.board[move.targetField] = 5
-			} 
+			}
 		case promotionRook:
 			if position.blackToMove {
 				position.board[move.targetField] = 12
 			} else {
 				position.board[move.targetField] = 4
-			} 
+			}
 		case promotionKnight:
 			if position.blackToMove {
 				position.board[move.targetField] = 10
 			} else {
 				position.board[move.targetField] = 2
-			} 
+			}
 		case promotionBishop:
 			if position.blackToMove {
 				position.board[move.targetField] = 11
 			} else {
 				position.board[move.targetField] = 3
-			} 
+			}
 		}
-		position.enPassantTarget = -1
+		if position.blackToMove {
+			position.fullmoveCounter++
+		}
 		position.blackToMove = !position.blackToMove
-		position.fullmoveCounter++
 	} else {
 		fmt.Println("this move is invalid")
 	}
+}
+
+func unmakeMove() {
+	unmakeInfo := position.unmakeHistory[len(position.unmakeHistory)-1]
+	position.unmakeHistory = position.unmakeHistory[0 : len(position.unmakeHistory)-1]
+	move := unmakeInfo.move
+	position.board[move.startField] = position.board[move.targetField]
+	position.board[move.targetField] = unmakeInfo.targetFieldContent
+	//if white is to move that means we are unmaking black move and fullmove counter is incremented at the end of black's move
+	if !position.blackToMove {
+		position.fullmoveCounter--
+	}
+	position.blackToMove = !position.blackToMove
+	position.castlingRights = unmakeInfo.castlingRights
+	position.enPassantTarget = unmakeInfo.enPassantTarget
+	position.halfmoveClock = unmakeInfo.halfmoveClock
 }

@@ -1,18 +1,28 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 	"unicode"
-	"strconv"
 )
 
-type Position struct {
-	board             [120]byte
-	blackToMove      bool
-	castlingRights   [4]bool
+type UnmakeInfo struct {
+	move *Move
+	targetFieldContent byte
+	castlingRights  [4]bool
 	enPassantTarget int
-	halfmoveClock    byte
-	fullmoveCounter  uint16
+	halfmoveClock   byte
+}
+
+
+type Position struct {
+	board           [120]byte
+	blackToMove     bool
+	castlingRights  [4]bool
+	enPassantTarget int
+	halfmoveClock   byte
+	fullmoveCounter uint16
+	unmakeHistory   []UnmakeInfo
 }
 
 func newPosition(fen string) *Position {
@@ -116,11 +126,11 @@ func newPosition(fen string) *Position {
 	}
 
 	p := Position{board: board,
-		blackToMove:      blackToMove,
-		castlingRights:   castlingRights,
+		blackToMove:     blackToMove,
+		castlingRights:  castlingRights,
 		enPassantTarget: enPassantTarget,
-		halfmoveClock:    byte(halfmoveClock),
-		fullmoveCounter:  uint16(fullmoveCounter),
+		halfmoveClock:   byte(halfmoveClock),
+		fullmoveCounter: uint16(fullmoveCounter),
 	}
 	return &p
 }
