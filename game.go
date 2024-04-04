@@ -44,13 +44,17 @@ func runGame() {
 			unmakeMove()
 			printBoard()
 		} else {
-			legalMoves := generateMoves()
+			validMoves := generateMoves()
 			if strings.HasPrefix(input, "show") {
 				field := parseCoordinate(strings.Split(input, " ")[1])
-				printLegalMovesFromField(field, legalMoves)
+				printLegalMovesFromField(field, validMoves)
 			} else {
 				move := parseMove(input)
-				makeMove(move, legalMoves)
+				if isValid(move, validMoves) && isLegal(move) {
+					makeMove(move)
+				} else {
+					fmt.Println("invalid move")
+				}
 				printBoard()
 			}
 		}
@@ -106,7 +110,9 @@ func printLegalMovesFromField(field int, legalMoves []Move) {
 	fieldsToMove := []int{}
 	for _, move := range legalMoves {
 		if move.startField == field {
-			fieldsToMove = append(fieldsToMove, move.targetField)
+			if isLegal(&move) {
+				fieldsToMove = append(fieldsToMove, move.targetField)
+			}
 		}
 	}
 	for i := 2; i < 10; i++ {

@@ -255,94 +255,106 @@ func handleCastlingRights(piece byte, startField int, targetField int) {
 	}
 }
 
-func makeMove(move *Move, validMoves []Move) {
-	var isValid bool = false
+func isLegal(move *Move) bool {
+	makeMove(move)
+	enemyMoves := generateMoves()
+	for _, enemyMove := range enemyMoves {
+		if isType(position.board[enemyMove.targetField], "king") {
+			unmakeMove()
+			return false
+		}
+	}
+	unmakeMove()
+	return true
+}
+
+func isValid(move *Move, validMoves []Move) bool {
 	for _, validMove := range validMoves {
 		if move.startField == validMove.startField && move.targetField == validMove.targetField {
-			isValid = true
+			return true
 		}
 	}
-	if isValid {
-		unmakeInfo := UnmakeInfo{
-			move: move,
-			targetFieldContent: position.board[move.targetField],
-			castlingRights: position.castlingRights,
-			enPassantTarget: position.enPassantTarget,
-			halfmoveClock: position.halfmoveClock,
-		}
-		position.unmakeHistory = append(position.unmakeHistory, unmakeInfo)
-		piece := position.board[move.startField]
-		if isType(piece, "pawn") || position.board[move.targetField] != 0 {
-			position.halfmoveClock = 0
-		} else {
-			position.halfmoveClock++
-		}
-		handleCastlingRights(piece, move.startField, move.targetField)
-		position.board[move.startField] = 0
-		position.board[move.targetField] = piece
-		position.enPassantTarget = -1
-		switch move.moveType {
-		case firstPawnMove:
-			if position.blackToMove {
-				position.enPassantTarget = move.targetField - 10
-			} else {
-				position.enPassantTarget = move.targetField + 10
-			}
-		case enPassant:
-			fmt.Println("google en passant")
-			if position.blackToMove {
-				position.board[move.targetField-10] = 0
-			} else {
-				position.board[move.targetField+10] = 0
-			}
-		case castleShort:
-			if position.blackToMove {
-				position.board[28] = 0
-				position.board[26] = 12
-			} else {
-				position.board[98] = 0
-				position.board[96] = 4
-			}
-		case castleLong:
-			if position.blackToMove {
-				position.board[21] = 0
-				position.board[24] = 12
-			} else {
-				position.board[91] = 0
-				position.board[94] = 12
-			}
-		case promotionQueen:
-			if position.blackToMove {
-				position.board[move.targetField] = 13
-			} else {
-				position.board[move.targetField] = 5
-			}
-		case promotionRook:
-			if position.blackToMove {
-				position.board[move.targetField] = 12
-			} else {
-				position.board[move.targetField] = 4
-			}
-		case promotionKnight:
-			if position.blackToMove {
-				position.board[move.targetField] = 10
-			} else {
-				position.board[move.targetField] = 2
-			}
-		case promotionBishop:
-			if position.blackToMove {
-				position.board[move.targetField] = 11
-			} else {
-				position.board[move.targetField] = 3
-			}
-		}
-		if position.blackToMove {
-			position.fullmoveCounter++
-		}
-		position.blackToMove = !position.blackToMove
+	return false
+}
+
+func makeMove(move *Move) {
+	unmakeInfo := UnmakeInfo{
+		move:               move,
+		targetFieldContent: position.board[move.targetField],
+		castlingRights:     position.castlingRights,
+		enPassantTarget:    position.enPassantTarget,
+		halfmoveClock:      position.halfmoveClock,
+	}
+	position.unmakeHistory = append(position.unmakeHistory, unmakeInfo)
+	piece := position.board[move.startField]
+	if isType(piece, "pawn") || position.board[move.targetField] != 0 {
+		position.halfmoveClock = 0
 	} else {
-		fmt.Println("this move is invalid")
+		position.halfmoveClock++
 	}
+	handleCastlingRights(piece, move.startField, move.targetField)
+	position.board[move.startField] = 0
+	position.board[move.targetField] = piece
+	position.enPassantTarget = -1
+	switch move.moveType {
+	case firstPawnMove:
+		if position.blackToMove {
+			position.enPassantTarget = move.targetField - 10
+		} else {
+			position.enPassantTarget = move.targetField + 10
+		}
+	case enPassant:
+		fmt.Println("google en passant")
+		if position.blackToMove {
+			position.board[move.targetField-10] = 0
+		} else {
+			position.board[move.targetField+10] = 0
+		}
+	case castleShort:
+		if position.blackToMove {
+			position.board[28] = 0
+			position.board[26] = 12
+		} else {
+			position.board[98] = 0
+			position.board[96] = 4
+		}
+	case castleLong:
+		if position.blackToMove {
+			position.board[21] = 0
+			position.board[24] = 12
+		} else {
+			position.board[91] = 0
+			position.board[94] = 12
+		}
+	case promotionQueen:
+		if position.blackToMove {
+			position.board[move.targetField] = 13
+		} else {
+			position.board[move.targetField] = 5
+		}
+	case promotionRook:
+		if position.blackToMove {
+			position.board[move.targetField] = 12
+		} else {
+			position.board[move.targetField] = 4
+		}
+	case promotionKnight:
+		if position.blackToMove {
+			position.board[move.targetField] = 10
+		} else {
+			position.board[move.targetField] = 2
+		}
+	case promotionBishop:
+		if position.blackToMove {
+			position.board[move.targetField] = 11
+		} else {
+			position.board[move.targetField] = 3
+		}
+	}
+	if position.blackToMove {
+		position.fullmoveCounter++
+	}
+	position.blackToMove = !position.blackToMove
 }
 
 func unmakeMove() {
