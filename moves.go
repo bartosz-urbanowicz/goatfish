@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"slices"
 )
+
 
 var (
 	blackPawnStartingSquares = []int{31, 32, 33, 34, 35, 36, 37, 38}
@@ -18,6 +19,10 @@ var (
 		6: 11,
 		7: 9,
 	}
+	blackCastleShortFields = []int{26, 27}
+	blackCastleLongFields = []int{22, 23, 24}
+	whiteCastleShortFields = []int{96, 97}
+	whiteCastleLongFields = []int{92, 93, 94}
 )
 
 const (
@@ -67,6 +72,17 @@ func generateMoves() []Move {
 	return moves
 }
 
+func generateLegalMoves() []Move {
+	moves := generateMoves()
+	legalMoves := []Move{}
+	for _, move := range moves {
+		if isLegal(&move) {
+			legalMoves = append(legalMoves, move)
+		}
+	}
+	return legalMoves
+}
+
 func checkFieldsEmpty(fields []int) bool {
 	for _, field := range fields {
 		if position.board[field] != 0 {
@@ -79,21 +95,17 @@ func checkFieldsEmpty(fields []int) bool {
 func generateCastleMoves() []Move {
 	moves := []Move{}
 	if position.blackToMove {
-		castleShortFields := []int{26, 27}
-		if checkFieldsEmpty(castleShortFields) && position.castlingRights[2] {
+		if checkFieldsEmpty(blackCastleShortFields) && position.castlingRights[2] {
 			moves = append(moves, *NewMove(25, 27, castleShort))
 		}
-		castleLongFields := []int{22, 23, 24}
-		if checkFieldsEmpty(castleLongFields) && position.castlingRights[3] {
+		if checkFieldsEmpty(blackCastleLongFields) && position.castlingRights[3] {
 			moves = append(moves, *NewMove(25, 23, castleLong))
 		}
 	} else {
-		castleShortFields := []int{96, 97}
-		if checkFieldsEmpty(castleShortFields) && position.castlingRights[0] {
+		if checkFieldsEmpty(whiteCastleShortFields) && position.castlingRights[0] {
 			moves = append(moves, *NewMove(95, 97, castleShort))
 		}
-		castleLongFields := []int{92, 93, 94}
-		if checkFieldsEmpty(castleLongFields) && position.castlingRights[1] {
+		if checkFieldsEmpty(whiteCastleLongFields) && position.castlingRights[1] {
 			moves = append(moves, *NewMove(95, 93, castleLong))
 		}
 	}
@@ -202,7 +214,7 @@ func generateKingMoves(field int) []Move {
 	moves := []Move{}
 	for i := 0; i < 8; i++ {
 		piece := position.board[field+offsets[byte(i)]]
-		if piece == 0 || isBlack(piece) != position.blackToMove {
+		if (piece == 0 || isBlack(piece) != position.blackToMove) && piece != 255 {
 			moves = append(moves, *NewMove(field, field+offsets[byte(i)], normal))
 		}
 	}
@@ -214,7 +226,7 @@ func generateKnightMoves(field int) []Move {
 	knightOffsets := []int{-21, -19, -8, 12, 21, 19, 8, -12}
 	for _, offset := range knightOffsets {
 		piece := position.board[field+offset]
-		if piece == 0 || isBlack(piece) != position.blackToMove {
+		if (piece == 0 || isBlack(piece) != position.blackToMove) && piece != 255 {
 			moves = append(moves, *NewMove(field, field+offset, normal))
 		}
 	}
@@ -255,17 +267,67 @@ func handleCastlingRights(piece byte, startField int, targetField int) {
 	}
 }
 
-func isLegal(move *Move) bool {
-	makeMove(move)
+func checkKingSafe() bool {
+	position.blackToMove = !position.blackToMove
 	enemyMoves := generateMoves()
 	for _, enemyMove := range enemyMoves {
 		if isType(position.board[enemyMove.targetField], "king") {
-			unmakeMove()
+			position.blackToMove = !position.blackToMove
 			return false
 		}
 	}
-	unmakeMove()
+	position.blackToMove = !position.blackToMove
 	return true
+}
+
+func checkCastleLegal(move *Move) bool {
+	var fields []int
+	if move.moveType == castleShort {
+		if position.blackToMove {
+			fields = blackCastleShortFields
+		} else {		
+			fields = whiteCastleShortFields
+		}
+	} else if move.moveType == castleLong {
+		if position.blackToMove {
+			fields = blackCastleLongFields
+		} else {
+			fields = whiteCastleLongFields
+		}
+	}
+
+	for _, field := range fields {
+		if position.blackToMove {
+			position.board[field] = 14
+		} else {
+			position.board[field] = 6
+		}
+	}
+	kingSafe := checkKingSafe()
+	for _, field := range fields {
+		position.board[field] = 0
+	}
+	if kingSafe {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isLegal(move *Move) bool {
+	if move.moveType == castleShort || move.moveType == castleLong {
+		if !checkCastleLegal(move) {
+			return false
+		}
+	}
+	makeMove(move)
+	kingSafe := checkKingSafe()
+	unmakeMove()
+	if kingSafe {
+		return true
+	} else {
+		return false
+	}
 }
 
 func isValid(move *Move, validMoves []Move) bool {
@@ -304,7 +366,6 @@ func makeMove(move *Move) {
 			position.enPassantTarget = move.targetField + 10
 		}
 	case enPassant:
-		fmt.Println("google en passant")
 		if position.blackToMove {
 			position.board[move.targetField-10] = 0
 		} else {
@@ -324,7 +385,7 @@ func makeMove(move *Move) {
 			position.board[24] = 12
 		} else {
 			position.board[91] = 0
-			position.board[94] = 12
+			position.board[94] = 4
 		}
 	case promotionQueen:
 		if position.blackToMove {
@@ -363,11 +424,41 @@ func unmakeMove() {
 	move := unmakeInfo.move
 	position.board[move.startField] = position.board[move.targetField]
 	position.board[move.targetField] = unmakeInfo.targetFieldContent
-	//if white is to move that means we are unmaking black move and fullmove counter is incremented at the end of black's move
-	if !position.blackToMove {
+	//we already switch the side here to make the conditions below more logical
+	position.blackToMove = !position.blackToMove
+	switch move.moveType {
+	case enPassant:
+		if position.blackToMove {
+			position.board[move.targetField+10] = 1
+		} else {
+			position.board[move.targetField-10] = 9
+		}
+	case castleShort:
+		if position.blackToMove {
+			position.board[26] = 0
+			position.board[28] = 12
+		} else {
+			position.board[96] = 0
+			position.board[98] = 4
+		}
+	case castleLong:
+		if position.blackToMove {
+			position.board[24] = 0
+			position.board[21] = 12
+		} else {
+			position.board[94] = 0
+			position.board[91] = 4
+		}
+	case promotionQueen, promotionRook, promotionKnight, promotionBishop:
+		if position.blackToMove {
+			position.board[move.startField] = 1
+		} else {
+			position.board[move.startField] = 9
+		}
+	}
+	if position.blackToMove {
 		position.fullmoveCounter--
 	}
-	position.blackToMove = !position.blackToMove
 	position.castlingRights = unmakeInfo.castlingRights
 	position.enPassantTarget = unmakeInfo.enPassantTarget
 	position.halfmoveClock = unmakeInfo.halfmoveClock
