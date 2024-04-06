@@ -1,10 +1,8 @@
 package main
 
 import (
-	// "fmt"
 	"slices"
 )
-
 
 var (
 	blackPawnStartingSquares = []int{31, 32, 33, 34, 35, 36, 37, 38}
@@ -20,9 +18,9 @@ var (
 		7: 9,
 	}
 	blackCastleShortFields = []int{26, 27}
-	blackCastleLongFields = []int{22, 23, 24}
+	blackCastleLongFields  = []int{22, 23, 24}
 	whiteCastleShortFields = []int{96, 97}
-	whiteCastleLongFields = []int{92, 93, 94}
+	whiteCastleLongFields  = []int{92, 93, 94}
 )
 
 const (
@@ -271,7 +269,8 @@ func checkKingSafe() bool {
 	position.blackToMove = !position.blackToMove
 	enemyMoves := generateMoves()
 	for _, enemyMove := range enemyMoves {
-		if isType(position.board[enemyMove.targetField], "king") {
+		attackedPiece := position.board[enemyMove.targetField]
+		if isType(attackedPiece, "king") {
 			position.blackToMove = !position.blackToMove
 			return false
 		}
@@ -285,14 +284,15 @@ func checkCastleLegal(move *Move) bool {
 	if move.moveType == castleShort {
 		if position.blackToMove {
 			fields = blackCastleShortFields
-		} else {		
+		} else {
 			fields = whiteCastleShortFields
 		}
 	} else if move.moveType == castleLong {
+		//we do not use castleFields because king doesnt pass the b file
 		if position.blackToMove {
-			fields = blackCastleLongFields
+			fields = []int{23, 24}
 		} else {
-			fields = whiteCastleLongFields
+			fields = []int{93, 94}
 		}
 	}
 
@@ -321,7 +321,9 @@ func isLegal(move *Move) bool {
 		}
 	}
 	makeMove(move)
+	position.blackToMove = !position.blackToMove
 	kingSafe := checkKingSafe()
+	position.blackToMove = !position.blackToMove
 	unmakeMove()
 	if kingSafe {
 		return true
@@ -429,9 +431,9 @@ func unmakeMove() {
 	switch move.moveType {
 	case enPassant:
 		if position.blackToMove {
-			position.board[move.targetField+10] = 1
+			position.board[move.targetField-10] = 1
 		} else {
-			position.board[move.targetField-10] = 9
+			position.board[move.targetField+10] = 9
 		}
 	case castleShort:
 		if position.blackToMove {
@@ -451,9 +453,9 @@ func unmakeMove() {
 		}
 	case promotionQueen, promotionRook, promotionKnight, promotionBishop:
 		if position.blackToMove {
-			position.board[move.startField] = 1
-		} else {
 			position.board[move.startField] = 9
+		} else {
+			position.board[move.startField] = 1
 		}
 	}
 	if position.blackToMove {

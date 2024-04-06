@@ -31,7 +31,8 @@ var (
 
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
-	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake|perft)$")
+	// TODO deeper perft than 9
+	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake|perft [1-9])$")
 	printBoard()
 	fmt.Print("> ")
 	for scanner.Scan() {
@@ -43,8 +44,12 @@ func runGame() {
 		} else if input == "unmake" {
 			unmakeMove()
 			printBoard()
-		} else if input == "perft"{
-			runPerft()
+		} else if strings.HasPrefix(input, "perft") {
+			depth, err := strconv.Atoi(strings.Split(input, " ")[1])
+			if err != nil {
+				panic(err)
+			}
+			runPerft(depth)
 		} else {
 			validMoves := generateMoves()
 			if strings.HasPrefix(input, "show") {
