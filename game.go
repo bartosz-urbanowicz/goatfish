@@ -31,8 +31,7 @@ var (
 
 func runGame() {
 	scanner := bufio.NewScanner(os.Stdin)
-	// TODO deeper perft than 9
-	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake|perft [1-9])$")
+	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake|perft [1-9]*[0-9]+)$")
 	printBoard()
 	fmt.Print("> ")
 	for scanner.Scan() {
@@ -91,7 +90,7 @@ func parseCoordinate(coord string) int {
 
 func printBoard() {
 	// fmt.Println("(black to move: ", position.blackToMove, ")")
-	// fmt.Println("(castling rights: ", position.castlingRights, ")")
+	//fmt.Println("(castling rights: ", position.castlingRights, ")")
 	// fmt.Println("(en passant target: ", position.enPassantTarget, ")")
 	// fmt.Println("(halfmove clock: ", position.halfmoveClock, ")")
 	// fmt.Println("(fullmove counter: ", position.fullmoveCounter, ")")
