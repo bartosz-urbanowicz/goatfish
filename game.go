@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"regexp"
 	"slices"
@@ -29,7 +30,12 @@ var (
 	}
 )
 
-func runGame() {
+func playRandomMove(moves []Move) {
+	move := moves[rand.Intn(len(moves))]
+	makeMove(&move)
+}
+
+func runGame(players int) {
 	scanner := bufio.NewScanner(os.Stdin)
 	regex := regexp.MustCompile("^(?:[a-h][1-8][a-h][1-8]|q|show [a-h][1-8]|unmake|perft [1-9]*[0-9]+)$")
 	printBoard()
@@ -61,6 +67,9 @@ func runGame() {
 				} else {
 					fmt.Println("invalid move")
 				}
+				if players == 1 {
+					playRandomMove(generateLegalMoves())
+				}
 				printBoard()
 			}
 		}
@@ -89,11 +98,13 @@ func parseCoordinate(coord string) int {
 }
 
 func printBoard() {
-	// fmt.Println("(black to move: ", position.blackToMove, ")")
+	fmt.Println("(black to move: ", position.blackToMove, ")")
 	//fmt.Println("(castling rights: ", position.castlingRights, ")")
 	// fmt.Println("(en passant target: ", position.enPassantTarget, ")")
 	// fmt.Println("(halfmove clock: ", position.halfmoveClock, ")")
 	// fmt.Println("(fullmove counter: ", position.fullmoveCounter, ")")
+	fmt.Println("white pieces: ", position.whitePieces)
+	fmt.Println("black pieces: ", position.blackPieces)
 	for i := 2; i < 10; i++ {
 		//printing rank number
 		fmt.Print(8 - (i - 2))

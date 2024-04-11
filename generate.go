@@ -23,19 +23,22 @@ var (
 
 func generateMoves() []Move {
 	var moves []Move
-	for field, piece := range position.board {
-		if piece != 0 {
-			if isBlack(piece) == position.blackToMove {
-				if isRayPiece(piece) {
-					moves = append(moves, generateRayMoves(field, piece)...)
-				} else if isType(piece, "pawn") {
-					moves = append(moves, generatePawnMoves(field, piece)...)
-				} else if isType(piece, "king") {
-					moves = append(moves, generateKingMoves(field)...)
-				} else if isType(piece, "knight") {
-					moves = append(moves, generateKnightMoves(field)...)
-				}
-			}
+	var pieces map[int]bool
+	if position.blackToMove {
+		pieces = position.blackPieces
+	} else {
+		pieces = position.whitePieces
+	}
+	for field, _ := range pieces {
+		piece := position.board[field]
+		if isRayPiece(piece) {
+			moves = append(moves, generateRayMoves(field, piece)...)
+		} else if isType(piece, "pawn") {
+			moves = append(moves, generatePawnMoves(field, piece)...)
+		} else if isType(piece, "king") {
+			moves = append(moves, generateKingMoves(field)...)
+		} else if isType(piece, "knight") {
+			moves = append(moves, generateKnightMoves(field)...)
 		}
 	}
 	moves = append(moves, generateCastleMoves()...)

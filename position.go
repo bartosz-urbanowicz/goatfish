@@ -16,6 +16,8 @@ type UnmakeInfo struct {
 
 type Position struct {
 	board           [120]byte
+	whitePieces     map[int]bool
+	blackPieces     map[int]bool
 	blackToMove     bool
 	castlingRights  [4]bool
 	enPassantTarget int
@@ -80,6 +82,22 @@ func boardFromFEN(boardString string) [120]byte {
 	return board
 }
 
+func piecesSetsFromBoard(board [120]byte) (map[int]bool, map[int]bool) {
+	//we use maps to create a set structure in order to delete pieces more efficiently
+	whitePieces := map[int]bool{}
+	blackPieces := map[int]bool{}
+	for field, piece := range board {
+		if piece != 0 && piece != 255 {
+			if isBlack(piece) {
+				blackPieces[field] = true
+			} else {
+				whitePieces[field] = true
+			}
+		}
+	}
+	return whitePieces, blackPieces
+}
+
 func castlingRightsFromFEN(castleRightsString string) [4]bool {
 	//indexes: white short - 0, white long - 1, black short - 2, black long - 3
 	castlingRights := [4]bool{false, false, false, false}
@@ -119,6 +137,7 @@ func newPosition(fen string) *Position {
 	fields := strings.Split(fen, " ")
 
 	board := boardFromFEN(fields[0])
+	whitePieces, blackPieces := piecesSetsFromBoard(board)
 	blackToMove := fields[1] != "w"
 	castlingRights := castlingRightsFromFEN(fields[2])
 	enPassantTarget := enPassantTargetFromFEN(fields[3])
@@ -134,6 +153,8 @@ func newPosition(fen string) *Position {
 	}
 
 	p := Position{board: board,
+		whitePieces:     whitePieces,
+		blackPieces:     blackPieces,
 		blackToMove:     blackToMove,
 		castlingRights:  castlingRights,
 		enPassantTarget: enPassantTarget,
